@@ -3,80 +3,69 @@ import './App.css';
 import InputField from './components/InputField';
 import TodoList from './components/TodoList';
 import { Todo } from './model';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 
-// let name: any;
-// let age: number | string;
-// let isStudent: boolean;
-// let hobbies: string[];
-// let role: [number, string];
+function App() {
+  const [todo, setTodo] = useState<string>('');
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [completedTodos, setCompletedTodos] = useState<Todo[]>([]);
 
-// let printName: (name: string) => never;
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
 
-// let personName: unknown;
+    if (todo) {
+      setTodos([...todos, { id: Date.now(), todo, isDone: false }]);
+      setTodo('');
+    }
+  };
 
-// interface Person {
-// 	name: string;
-// 	age?: number;
-// }
+  const onDragEnd = (res: DropResult) => {
+    const { source, destination } = res;
 
-// interface Guy extends Person {
-// 	profession: string;
-// }
+    if (!destination) return;
 
-// type X = {
-// 	a: string;
-// 	b: number;
-// };
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return;
 
-// type Y = X & {
-// 	c: string;
-// 	d: number;
-// };
+    let add,
+      active = todos,
+      complete = completedTodos;
 
-// missing a, b
-// let y: Y = {
-// 	c: 'efd',
-// 	d: 42,
-// };
+    if (source.droppableId === 'TodosList') {
+      add = active[source.index];
+      active.splice(source.index, 1);
+    } else {
+      add = complete[source.index];
+      complete.splice(source.index, 1);
+    }
 
-// function printName(name: string) {
-// 	console.log(name);
-// }
+    if (destination.droppableId === 'TodosList') {
+      active.splice(destination.index, 0, add);
+    } else {
+      complete.splice(destination.index, 0, add);
+    }
 
-// printName('dom');
-// role = [10, 'tim'];
+    setCompletedTodos(complete);
+    setTodos(active);
+  };
 
-// type Person = {
-// 	name: string;
-// 	age?: number;
-// };
-
-// let person: Person = {
-// 	name: 'Dom',
-// };
-
-// let lotsOfPeople: Person[];
-
-const App: React.FC = () => {
-	const [todo, setTodo] = useState<string>('');
-	const [todos, setTodos] = useState<Todo[]>([]);
-
-	const handleAdd = (e: React.FormEvent) => {
-		e.preventDefault();
-
-		if (todo) {
-			setTodos([...todos, { id: Date.now(), todo: todo, isDone: false }]);
-			setTodo('');
-		}
-	};
-
-	return (
-		<div className="App">
-			<header className="heading">Taskify</header>
-			<InputField todo={todo} setTodo={setTodo} handleAdd={handleAdd} />
-			<TodoList todos={todos} setTodos={setTodos} />
-		</div>
-	);
-};
+  return (
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className="App">
+        <header className="heading">Taskify</header>
+        <InputField todo={todo} setTodo={setTodo} handleAdd={handleAdd} />
+        <TodoList
+          todos={todos}
+          setTodos={setTodos}
+          completedTodos={completedTodos}
+          setCompletedTodos={setCompletedTodos}
+        />
+      </div>
+    </DragDropContext>
+  );
+}
 
 export default App;
